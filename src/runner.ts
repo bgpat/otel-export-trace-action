@@ -36,6 +36,8 @@ export async function run() {
       workflowRunJobs,
     });
     core.setOutput("traceId", spanContext.traceId);
+  } catch(e) {
+    core.error(e);
   } finally {
     core.info("Shutdown Trace Provider");
     setTimeout(() => {
