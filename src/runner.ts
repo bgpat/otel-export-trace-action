@@ -36,14 +36,14 @@ export async function run() {
       workflowRunJobs,
     });
     core.setOutput("traceId", spanContext.traceId);
-  } catch(e) {
-    core.error(e);
+  } catch (e) {
+    core.error(JSON.stringify(e));
   } finally {
     core.info("Shutdown Trace Provider");
     setTimeout(() => {
       provider
         .forceFlush()
-        .shutdown()
+        .then(() => provider.shutdown())
         .then(() => {
           core.info("Provider shutdown");
         })

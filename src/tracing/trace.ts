@@ -1,3 +1,4 @@
+import * as core from "@actions/core";
 import * as grpc from "@grpc/grpc-js";
 import {
   BasicTracerProvider,
@@ -60,12 +61,19 @@ export function createTracerProvider(
   let exporter: SpanExporter = new ConsoleSpanExporter();
 
   if (!OTEL_CONSOLE_ONLY) {
-    exporter = new OTLPTraceExporter({
-      url: otlpEndpoint,
-      credentials: process.env.OTEL_EXPORTER_OTLP_INSECURE === "true" ? null : grpc.credentials.createSsl(),
-      metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
-    });
-    core.debug(`exporter = ${exporter}`);
+    if (process.env.OTEL_EXPORTER_OTLP_INSECURE === "true") {
+      exporter = new OTLPTraceExporter({
+        url: otlpEndpoint,
+        metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
+      });
+    } else {
+      exporter = new OTLPTraceExporter({
+        url: otlpEndpoint,
+        credentials: grpc.credentials.createSsl(),
+        metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
+      });
+    }
+    core.debug(`exporter = ${JSON.stringify(exporter)}`);
   }
 
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));

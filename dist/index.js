@@ -270,11 +270,15 @@ async function run() {
         });
         core.setOutput("traceId", spanContext.traceId);
     }
+    catch (e) {
+        core.error(JSON.stringify(e));
+    }
     finally {
         core.info("Shutdown Trace Provider");
         setTimeout(() => {
             provider
-                .shutdown()
+                .forceFlush()
+                .then(() => provider.shutdown())
                 .then(() => {
                 core.info("Provider shutdown");
             })
@@ -336,6 +340,7 @@ const step_1 = __nccwpck_require__(59431);
 async function traceWorkflowRunJobs({ provider, workflowRunJobs, }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
     const tracer = provider.getTracer("otel-export-trace");
+    core.debug(`tracer: ${JSON.stringify(tracer)}`);
     const startTime = new Date(workflowRunJobs.workflowRun.run_started_at ||
         workflowRunJobs.workflowRun.created_at);
     let headRef = undefined;
@@ -430,6 +435,9 @@ async function traceWorkflowRunJobs({ provider, workflowRunJobs, }) {
             });
         }
     }
+    catch (e) {
+        core.error(JSON.stringify(e));
+    }
     finally {
         rootSpan.end(new Date(workflowRunJobs.workflowRun.updated_at));
     }
@@ -489,6 +497,9 @@ async function traceWorkflowRunJob({ parentContext, trace, parentSpan, tracer, j
                 });
             }
         }
+    }
+    catch (e) {
+        core.error(JSON.stringify(e));
     }
     finally {
         core.debug(`Job Span<${spanId}>: Ended<${job.completed_at}>`);
@@ -770,6 +781,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createTracerProvider = void 0;
+const core = __importStar(__nccwpck_require__(42186));
 const grpc = __importStar(__nccwpck_require__(7025));
 const sdk_trace_base_1 = __nccwpck_require__(29253);
 const exporter_trace_otlp_grpc_1 = __nccwpck_require__(60160);
@@ -812,11 +824,20 @@ function createTracerProvider(otlpEndpoint, otlpHeaders, workflowRunJobs, otelSe
     });
     let exporter = new sdk_trace_base_1.ConsoleSpanExporter();
     if (!OTEL_CONSOLE_ONLY) {
-        exporter = new exporter_trace_otlp_grpc_1.OTLPTraceExporter({
-            url: otlpEndpoint,
-            credentials: grpc.credentials.createSsl(),
-            metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
-        });
+        if (process.env.OTEL_EXPORTER_OTLP_INSECURE === "true") {
+            exporter = new exporter_trace_otlp_grpc_1.OTLPTraceExporter({
+                url: otlpEndpoint,
+                metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
+            });
+        }
+        else {
+            exporter = new exporter_trace_otlp_grpc_1.OTLPTraceExporter({
+                url: otlpEndpoint,
+                credentials: grpc.credentials.createSsl(),
+                metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
+            });
+        }
+        core.debug(`exporter = ${JSON.stringify(exporter)}`);
     }
     provider.addSpanProcessor(new sdk_trace_base_1.SimpleSpanProcessor(exporter));
     provider.register();
