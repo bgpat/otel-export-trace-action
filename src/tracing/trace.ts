@@ -62,7 +62,7 @@ export function createTracerProvider(
   if (!OTEL_CONSOLE_ONLY) {
     exporter = new OTLPTraceExporter({
       url: otlpEndpoint,
-      credentials: grpc.credentials.createSsl(),
+      credentials: process.env.OTEL_EXPORTER_OTLP_INSECURE === "true" ? null : grpc.credentials.createSsl(),
       metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
     });
   }
