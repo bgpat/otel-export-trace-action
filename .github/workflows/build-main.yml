@@ -10,6 +10,7 @@ on:
       - ".github/workflows/build-main.yml"
     branches:
       - main
+      - insecure
 
 jobs:
   lint-and-test:
