@@ -65,6 +65,7 @@ export function createTracerProvider(
       credentials: process.env.OTEL_EXPORTER_OTLP_INSECURE === "true" ? null : grpc.credentials.createSsl(),
       metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
     });
+    core.debug(`exporter = ${exporter}`);
   }
 
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
