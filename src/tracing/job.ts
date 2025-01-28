@@ -28,7 +28,6 @@ export async function traceWorkflowRunJobs({
   workflowRunJobs,
 }: TraceWorkflowRunJobsParams): Promise<SpanContext> {
   const tracer = provider.getTracer("otel-export-trace");
-  core.debug(`tracer: ${JSON.stringify(tracer)}`);
 
   const startTime = new Date(
     workflowRunJobs.workflowRun.run_started_at ||
@@ -152,8 +151,6 @@ export async function traceWorkflowRunJobs({
         workflowArtifacts: workflowRunJobs.workflowRunArtifacts,
       });
     }
-  } catch (e) {
-    core.error(JSON.stringify(e));
   } finally {
     rootSpan.end(new Date(workflowRunJobs.workflowRun.updated_at));
   }
@@ -233,8 +230,6 @@ async function traceWorkflowRunJob({
         });
       }
     }
-  } catch (e) {
-    core.error(JSON.stringify(e));
   } finally {
     core.debug(`Job Span<${spanId}>: Ended<${job.completed_at}>`);
     // Some skipped and post jobs return completed_at dates that are older than started_at

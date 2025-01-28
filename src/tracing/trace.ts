@@ -1,4 +1,3 @@
-import * as core from "@actions/core";
 import * as grpc from "@grpc/grpc-js";
 import {
   BasicTracerProvider,
@@ -73,7 +72,6 @@ export function createTracerProvider(
         metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
       });
     }
-    core.debug(`exporter = ${JSON.stringify(exporter)}`);
   }
 
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
