@@ -270,11 +270,15 @@ async function run() {
         });
         core.setOutput("traceId", spanContext.traceId);
     }
+    catch (e) {
+        core.error(JSON.stringify(e));
+    }
     finally {
         core.info("Shutdown Trace Provider");
         setTimeout(() => {
             provider
-                .shutdown()
+                .forceFlush()
+                .then(() => provider.shutdown())
                 .then(() => {
                 core.info("Provider shutdown");
             })
@@ -812,11 +816,19 @@ function createTracerProvider(otlpEndpoint, otlpHeaders, workflowRunJobs, otelSe
     });
     let exporter = new sdk_trace_base_1.ConsoleSpanExporter();
     if (!OTEL_CONSOLE_ONLY) {
-        exporter = new exporter_trace_otlp_grpc_1.OTLPTraceExporter({
-            url: otlpEndpoint,
-            credentials: grpc.credentials.createSsl(),
-            metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
-        });
+        if (process.env.OTEL_EXPORTER_OTLP_INSECURE === "true") {
+            exporter = new exporter_trace_otlp_grpc_1.OTLPTraceExporter({
+                url: otlpEndpoint,
+                metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
+            });
+        }
+        else {
+            exporter = new exporter_trace_otlp_grpc_1.OTLPTraceExporter({
+                url: otlpEndpoint,
+                credentials: grpc.credentials.createSsl(),
+                metadata: grpc.Metadata.fromHttp2Headers(stringToHeader(otlpHeaders)),
+            });
+        }
     }
     provider.addSpanProcessor(new sdk_trace_base_1.SimpleSpanProcessor(exporter));
     provider.register();
