@@ -42,6 +42,7 @@ export async function run() {
     core.info("Shutdown Trace Provider");
     setTimeout(() => {
       provider
+        .forceFlush()
         .shutdown()
         .then(() => {
           core.info("Provider shutdown");
